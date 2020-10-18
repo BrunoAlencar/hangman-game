@@ -1,36 +1,38 @@
-import { createRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
 import { Square } from './styles';
 
 const Draw = props => {
-  const stickMan = createRef()
+  const stickMan = useRef(null)
   const [context, setContext] = useState({})
 
-    useEffect(() => {
-      setContext(stickMan.current.getContext('2d'));
-      startHangman();
-      drawParts()
-    }, [ props.life])
-
-    useEffect(()=> {
-      console.log(props.isResetedGame)
-      if(props.isResetedGame) reset()
-    }, [props.isResetedGame])
-
-  const startHangman = () => {
-    context.beginPath();
-    context.strokeStyle = "#fff";
-    context.lineWidth = 2;
-    draw(10, 150, 150, 150); // bottom line
-    draw (10, 5, 10, 600); // vertical line ( bigger one )
-    draw (10, 5, 60, 5); // top line
-    draw (60, 5, 60, 15); // rope
+  const startHangman =  () => {
+    draw( 10, 150, 150, 150); // bottom line
+    draw( 10, 5, 10, 600); // vertical line ( bigger one )
+    draw( 10, 5, 60, 5); // top line
+    draw(60, 5, 60, 15); // rope
   }
 
+  useEffect(() => {
+    startHangman();
+  }, [ props.life])
+
+  useEffect(()=> {
+    console.log(props.isResetedGame)
+    if(props.isResetedGame) reset()
+  }, [props.isResetedGame])
+
+
+
   const draw = ($pathFromx, $pathFromy, $pathTox, $pathToy) => {
-    context.moveTo($pathFromx, $pathFromy);
-    context.lineTo($pathTox, $pathToy);
-    context.stroke();
+    const canvasContext = stickMan.current.getContext('2d')
+    canvasContext.beginPath();
+    canvasContext.strokeStyle = "#fff";
+    canvasContext.lineWidth = 2;
+    canvasContext.moveTo($pathFromx, $pathFromy);
+    canvasContext.lineTo($pathTox, $pathToy);
+    canvasContext.stroke();
+    setContext(canvasContext)
   }
 
   const head = () => {

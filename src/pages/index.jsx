@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+import axios from 'axios';
+
 import { Container, InputButtonContainer, AlphabetContainer, ButtonPlayAgain } from './styles'
 
 import Head from 'next/head'
@@ -7,37 +9,39 @@ import Draw from '../components/Draw';
 import Letter from '../components/Letter';
 
 export default function Home() {
-
+  const BASE_URL = 'http://localhost:4000/api'
   const [life, setLife] = useState(6);
   const [letters, setLetters] = useState([])
-  const [currentLetter, setCurrentLetter] = useState('')
   const [game, setGame] = useState({})
   const [isWinner, setIsWinner] = useState(false)
   const [isResetedGame, setIsResetedGame] = useState(false)
   const [alphabet, setAlphabet] = useState(['A','B','C','D','E','F','G','H', 'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','X','Y','Z'])
   const [lettersIsDisabled, setLettersIsDisabled] = useState(Array(alphabet.length).fill(false))
 
-  const verifyWord = (letter) => {
-    const secretWord = 'CAR';
-    return secretWord.indexOf(letter)
+  const verifyWord = async (letter) => {
+
+    const {data} = await axios.post(`${BASE_URL}/checkletter`,{
+      id: game.id,
+      letter: letter
+    })
+    console.log(data)
+    return data.indexesOfLetters.length > 0 ? data.indexesOfLetters : false
   }
 
-  const newGame = () => {
-    const currentGame = {
-      theme: 'Objeto',
-      quantityLetters: 3
-    }
-    setGame(currentGame)
-    return currentGame
+  const newGame = async () => {
+
   }
 
-  const confirmLetter = (letter, index) => {
-    const resultVerifyWord = verifyWord(letter)
-    if ( resultVerifyWord === -1 ) {
+  const confirmLetter = async (letter, index) => {
+    const resultVerifyWord = await verifyWord(letter)
+    console.log(resultVerifyWord)
+    if (!resultVerifyWord) {
       setLife(life - 1)
     } else {
       let holdLetter = letters;
-      holdLetter[resultVerifyWord] = letter;
+      resultVerifyWord.forEach(indexOfLetter => {
+        holdLetter[indexOfLetter] = letter
+      })
       setLetters([...holdLetter]);
     }
     const arrayIsDisabledLetters = lettersIsDisabled;
@@ -45,16 +49,15 @@ export default function Home() {
     setLettersIsDisabled([...arrayIsDisabledLetters])
 
     setIsWinner(verifyIsWinner())
-    setCurrentLetter('')
     console.log('brunos2')
   }
 
-  const resetGame = () => {
+  const resetGame = async () => {
     setIsResetedGame(true)
-    newGame()
-    setLetters([...Array(game.quantityLetters).fill('_ ')])
+    const {data} = await axios.get(`${BASE_URL}/game-start`)
+    setGame(data)
+    setLetters([...Array(data.quantityLetters).fill('_ ')])
     setLife(6);
-    setCurrentLetter('');
     setIsWinner(false)
     setLettersIsDisabled(Array(alphabet.length).fill(false))
     setTimeout(()=> {
@@ -66,9 +69,15 @@ export default function Home() {
     return !letters.includes('_ ')
   }
 
-  useEffect(() => {
-    const { quantityLetters } = newGame()
-    setLetters([...Array(quantityLetters).fill('_ ')])
+  useEffect( () => {
+    (async () => {
+      const {data} = await axios.get(`${BASE_URL}/game-start`)
+      setGame(data)
+      const { quantityLetters } = data
+      setLetters([...Array(quantityLetters).fill('_ ')])
+      console.log(data)
+    })()
+
   }, [])
 
   return (
